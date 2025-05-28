@@ -7,9 +7,9 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { HeroUIProviderWrapper } from "./_components/HeroWrapper";
 
 export const metadata: Metadata = {
-  title: "Controle de estoque",
-  description: "Controle de estoque",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+    title: "Controle de estoque",
+    description: "Controle de estoque",
+    icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
 const geist = Geist({
@@ -21,7 +21,7 @@ export default function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="pt-BR" className={`${geist.variable}`}>
+        <html lang="pt-BR" className={`${geist.variable} dark`}>
             <body>
                 <HeroUIProviderWrapper>
                     <TRPCReactProvider>
