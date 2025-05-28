@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
+import { HeroUIProviderWrapper } from "./_components/HeroWrapper";
 
 export const metadata: Metadata = {
   title: "Controle de estoque",
@@ -12,18 +13,22 @@ export const metadata: Metadata = {
 };
 
 const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
+    subsets: ["latin"],
+    variable: "--font-geist-sans",
 });
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="pt-BR" className={`${geist.variable}`}>
-      <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="pt-BR" className={`${geist.variable}`}>
+            <body>
+                <HeroUIProviderWrapper>
+                    <TRPCReactProvider>
+                        {children}
+                    </TRPCReactProvider>
+                </HeroUIProviderWrapper>
+            </body>
+        </html>
+    );
 }
