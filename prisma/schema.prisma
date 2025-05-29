@@ -18,3 +18,16 @@ model Post {
 
     @@index([name])
 }
+
+model Product {
+    id        Int @id @default(autoincrement())
+    name      String
+    sku       String  @unique
+    price     Float
+    cost      Float 
+    quantity  Int 
+    description String?
+    image String? @db.Text
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
