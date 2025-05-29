@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { LatestPost } from "@/app/_components/post";
 import { api, HydrateClient } from "@/trpc/server";
-import { OpenModal } from "@/components/stock/button";
+import OpenModal from "@/components/stock/modal";
 
 export default async function Home() {
 
