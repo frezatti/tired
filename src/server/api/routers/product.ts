@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import { a } from "framer-motion/client";
 
 
 export const productRouter = createTRPCRouter ({
@@ -22,13 +23,31 @@ export const productRouter = createTRPCRouter ({
           name: input.name,
           sku: input.sku,
           price: parseFloat(input.price),
-          cost: parseFloat(input.cost),
+          cost:parseFloat(input.cost),
           quantity: parseInt(input.quantity),
           description: input.description,
           image: input.image64,
         },
       });
+        return product;
         }),
+
+    getAllProducts: publicProcedure.query(async({ctx})=>{
+
+        const {db} = ctx;
+        return await db.product.findMany();
+
+    }),
+
+    getProduct_by_id : publicProcedure
+    .input(z.object({id: z.number()}))
+    .query( async ({ctx, input}) =>{
+        const {db} = ctx;
+
+        return await db.product.findUnique({
+            where: {id: input.id}
+        })
+    })
 
 }); 
 

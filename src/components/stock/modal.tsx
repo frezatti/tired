@@ -16,17 +16,9 @@ import {
     Alert
 } from '@heroui/react';
 import { Upload, Image } from 'lucide-react';
-import { productRouter } from '@/server/api/routers/produt';
+import { api } from '@/trpc/react';
+import type { ProductData } from '@/types';
 
-interface ProductData {
-    name: string;
-    sku: string;
-    price: string;
-    cost: string;
-    quantity: string;
-    description: string;
-    image: File;
-}
 
 export default function ProductModal() {
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -40,6 +32,19 @@ export default function ProductModal() {
         image: null
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+    // FIXED: Move the useMutation hook outside of the handleSubmit function
+    const createProduct = api.product.createProduct.useMutation({
+        onSuccess: () => {
+            // Handle success (e.g., show toast, reset form, etc.)
+            console.log('Product created successfully!');
+            resetForm();
+        },
+        onError: (error) => {
+            // Handle error
+            console.error('Error creating product:', error);
+        }
+    });
 
     const handleInputChange = (field: string, value: string) => {
         setProductData(prev => ({
@@ -72,13 +77,12 @@ export default function ProductModal() {
             const reader = new FileReader();
             reader.onload = (e) => {
                 if (e.target?.result && typeof e.target.result === "string") {
-                    setImagePreview(e.target.result); // Keep preview as is
+                    setImagePreview(e.target.result);
                 }
             };
             reader.readAsDataURL(file);
         }
     };
-
 
     const handleSubmit = async () => {
         try {
@@ -88,30 +92,29 @@ export default function ProductModal() {
                 img64 = await new Promise<string>((resolve, reject) => {
                     reader.onload = (e) => {
                         if (e.target?.result && typeof e.target.result === "string") {
-                            resolve(e.target.result); // Full data URL
+                            resolve(e.target.result);
                         } else {
                             reject(new Error("Failed to read file"));
                         }
                     };
                     reader.onerror = () => reject(new Error("file no good. Cant read"));
-                    reader.readAsDataURL(productData.image);
-                })
+                    reader.readAsDataURL(productData.image!);
+                });
                 img64 = img64.split(",")[1];
             }
 
-            await productRouter.mutateAsync({
+            await createProduct.mutateAsync({
                 name: productData.name,
                 sku: productData.sku,
                 price: productData.price,
                 cost: productData.cost,
                 quantity: productData.quantity,
                 description: productData.description,
-                image: img64
-
+                image64: img64 || undefined
             });
 
-        }
-        catch {
+        } catch (error) {
+            console.error('Error in handleSubmit:', error);
         }
     };
 
@@ -305,8 +308,9 @@ export default function ProductModal() {
                                             handleSubmit();
                                             onClose();
                                         }}
-                                        className="bg-gradient-to-r from-green-500 to-green-600 "
-                                        isDisabled={!productData.name || !productData.sku || !productData.price || !productData.cost}
+                                        className="bg-gradient-to-r from-green-500 to-green-600"
+                                        isDisabled={!productData.name || !productData.sku || !productData.price || !productData.cost || createProduct.isPending}
+                                        isLoading={createProduct.isPending}
                                     >
                                         Salvar Produto
                                     </Button>
