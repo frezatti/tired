@@ -55,6 +55,16 @@ export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction,
             });
             setImagePreview(initialData.image64 ?? null);
 
+            productUpdate.mutate({
+                id: initialData.id,
+                name: productData.name,
+                sku: productData.sku,
+                price: parseFloat(productData.price),
+                cost: parseFloat(productData.cost),
+                quantity: parseInt(productData.quantity),
+                description: productData.description || undefined,
+                image64: imagePreview?.split(",")[1] || undefined,
+            });
 
         } else {
             resetForm();

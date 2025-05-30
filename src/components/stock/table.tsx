@@ -46,10 +46,11 @@ export default function ProductsTable({ onEditAction, refreshTrigger }: Products
     const { data: products, isLoading, error, refetch } = api.product.getAllProducts.useQuery();
     const deleteProduct = api.product.deleteProduct_by_id.useMutation({
         onSuccess: async () => {
-            await refetch(); // Make sure to await the refetch
+            await refetch();
             setShowRadialMenu(false);
         },
     });
+
 
     useEffect(() => {
         const refreshData = async () => {
