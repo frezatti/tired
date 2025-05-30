@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
     Modal,
     ModalContent,
@@ -19,9 +20,16 @@ import { Upload, Image } from 'lucide-react';
 import { api } from '@/trpc/react';
 import type { ProductData } from '@/types';
 
+import type { Product } from "@/types";
 
-export default function ProductModal() {
-    const { isOpen, onOpen, onOpenChange } = useDisclosure();
+interface ProductModalProps {
+    isOpen: boolean;
+    onOpenChangeAction: (open: boolean) => void;
+    onSaveAction: () => void;
+    initialData: Product | null;
+}
+
+export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction, initialData }: ProductModalProps) {
     const [productData, setProductData] = useState<ProductData>({
         name: '',
         sku: '',
@@ -32,16 +40,33 @@ export default function ProductModal() {
         image: null
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const productUpdate = api.product.updateProduct_by_id.useMutation();
 
-    // FIXED: Move the useMutation hook outside of the handleSubmit function
+    useEffect(() => {
+        if (initialData) {
+            setProductData({
+                name: initialData.name,
+                sku: initialData.sku,
+                price: String(initialData.price),
+                cost: String(initialData.cost),
+                quantity: String(initialData.quantity),
+                description: initialData.description ?? '',
+                image: null // a imagem original não pode ser reaproveitada diretamente
+            });
+            setImagePreview(initialData.image64 ?? null);
+
+
+        } else {
+            resetForm();
+        }
+    }, [initialData]);
+
     const createProduct = api.product.createProduct.useMutation({
         onSuccess: () => {
-            // Handle success (e.g., show toast, reset form, etc.)
             console.log('Product created successfully!');
             resetForm();
         },
         onError: (error) => {
-            // Handle error
             console.error('Error creating product:', error);
         }
     });
@@ -86,6 +111,20 @@ export default function ProductModal() {
 
     const handleSubmit = async () => {
         try {
+            if (initialData) {
+                productUpdate.mutate({
+                    id: initialData.id,
+                    name: initialData.name,
+                    sku: initialData.sku,
+                    price: initialData.price,
+                    cost: initialData.cost,
+                    quantity: initialData.quantity,
+                    description: initialData.description,
+                    image64: initialData.image64,
+                });
+
+                return
+            }
             let img64 = null;
             if (productData.image) {
                 const reader = new FileReader();
@@ -133,21 +172,12 @@ export default function ProductModal() {
 
     return (
         <div>
-            <Button
-                onPress={onOpen}
-                color="primary"
-                size="lg"
-                className="bg-gradient-to-r from-blue-500 to-purple-600"
-            >
-                Adicionar Produto
-            </Button>
-
             <Modal
                 isOpen={isOpen}
                 scrollBehavior="inside"
                 placement="top-center"
                 size="4xl"
-                onOpenChange={onOpenChange}
+                onOpenChange={onOpenChangeAction}
                 backdrop="opaque"
             >
                 <ModalContent>

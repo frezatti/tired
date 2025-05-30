@@ -1,6 +1,7 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
     Table,
     TableHeader,
@@ -20,7 +21,6 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 import { api } from '@/trpc/react';
 import type { Product } from '@/types';
 
-// Mock data structure that should match your database
 const columns = [
     { key: "id", label: "ID", sortable: true },
     { key: "image", label: "IMAGEM", sortable: false },
@@ -31,10 +31,47 @@ const columns = [
     { key: "quantity", label: "ESTOQUE", sortable: true },
 ];
 
-export default function ProductsTable() {
-    // Use tRPC to fetch products
-    const { data: products, isLoading, error } = api.product.getAllProducts.useQuery();
+interface ProductsTableProps {
+    onEditAction: (product: Product) => void;
+    refreshTrigger?: number;
+}
 
+
+export default function ProductsTable({ onEditAction, refreshTrigger }: ProductsTableProps) {
+
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [showRadialMenu, setShowRadialMenu] = useState<boolean>(false);
+    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    const { data: products, isLoading, error, refetch } = api.product.getAllProducts.useQuery();
+    const deleteProduct = api.product.deleteProduct_by_id.useMutation();
+
+    useEffect(() => {
+        if (refreshTrigger && refreshTrigger > 0) {
+            refetch();
+        }
+    }, [refreshTrigger, refetch]);
+
+    const handleRowRightClick = (e: React.MouseEvent, product: Product) => {
+        e.preventDefault();
+        setSelectedProduct(product);
+        setMenuPosition({ x: e.clientX, y: e.clientY });
+        setShowRadialMenu(true);
+    };
+
+
+
+    const handleDeleteProduct = async (product: Product) => {
+        deleteProduct.mutate({ id: product.id });
+        setShowRadialMenu(false);
+        refetch();
+    };
+
+
+    const handleEditProduct = (product: Product) => {
+        onEditAction(product);
+        setShowRadialMenu(false);
+    };
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -57,7 +94,61 @@ export default function ProductsTable() {
         if (quantity < 10) return 'warning';
         return 'success';
     };
-
+    const RadialMenu = () => (
+        showRadialMenu && selectedProduct && (
+            <>
+                <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowRadialMenu(false)}
+                />
+                <div
+                    className="fixed z-50 bg-slate-800 rounded-full p-4 shadow-2xl border border-slate-600"
+                    style={{
+                        left: menuPosition.x - 60,
+                        top: menuPosition.y - 60,
+                        width: '120px',
+                        height: '120px'
+                    }}
+                >
+                    <div className="relative w-full h-full">
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            variant="flat"
+                            color="warning"
+                            className="absolute top-0 left-1/2 transform -translate-x-1/2"
+                            onPress={() => handleEditProduct(selectedProduct)}
+                        >
+                            <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            variant="flat"
+                            color="danger"
+                            className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                            onPress={() => handleDeleteProduct(selectedProduct)}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                            isIconOnly
+                            size="sm"
+                            variant="flat"
+                            color="primary"
+                            className="absolute top-1/2 left-0 transform -translate-y-1/2"
+                            onPress={() => {
+                                console.log('View product:', selectedProduct.id);
+                                setShowRadialMenu(false);
+                            }}
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            </>
+        )
+    );
     const renderCell = (product: Product, columnKey: React.Key) => {
         const cellValue = product[columnKey as keyof Product];
 
@@ -84,7 +175,7 @@ export default function ProductsTable() {
                             {product.name}
                         </p>
                         <p className="text-tiny text-default-500 capitalize">
-                            {product.description
+                            {product.description != null
                                 ? product.description.substring(0, 50) +
                                 (product.description.length > 50 ? '...' : '')
                                 : 'No description'}
@@ -135,38 +226,6 @@ export default function ProductsTable() {
                         {formatCurrency(profit)}
                     </Chip>
                 );
-            case "actions":
-                return (
-                    <div className="flex items-center gap-2">
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="primary"
-                            aria-label="Visualizar"
-                        >
-                            <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="warning"
-                            aria-label="Editar"
-                        >
-                            <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            isIconOnly
-                            size="sm"
-                            variant="light"
-                            color="danger"
-                            aria-label="Excluir"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </div>
-                );
             default:
                 return cellValue?.toString() || '';
         }
@@ -184,7 +243,7 @@ export default function ProductsTable() {
 
     return (
         <div className="max-w-7xl mx-auto p-6">
-            <Card className="shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700">
+            <Card className="shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-none ">
                 <CardHeader className="pb-4">
                     <div className="flex justify-between items-center w-full">
                         <div>
@@ -211,10 +270,9 @@ export default function ProductsTable() {
                 </CardHeader>
                 <CardBody>
                     <Table
+                        removeWrapper
                         aria-label="Tabela de produtos"
-                        isStriped
                         color="primary"
-                        selectionMode="multiple"
                         classNames={{
                             wrapper: "min-h-[400px] bg-transparent",
                             th: "bg-slate-800 text-white font-semibold",
@@ -258,7 +316,11 @@ export default function ProductsTable() {
                             }
                         >
                             {(product) => (
-                                <TableRow key={product.id}>
+                                <TableRow
+                                    key={product.id}
+                                    onContextMenu={(e) => handleRowRightClick(e, product)}
+                                    className="cursor-context-menu hover:bg-slate-700/50"
+                                >
                                     {(columnKey) => (
                                         <TableCell>
                                             {renderCell(product, columnKey)}
@@ -270,6 +332,10 @@ export default function ProductsTable() {
                     </Table>
                 </CardBody>
             </Card>
+            <RadialMenu />
         </div>
     );
 }
+
+
+

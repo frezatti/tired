@@ -16,7 +16,7 @@ export interface Product {
     cost: number;
     quantity: number;
     description?: string ;
-    imageUrl?: string;
+    image64?: string;
     createdAt: Date;
     updatedAt: Date;
 }

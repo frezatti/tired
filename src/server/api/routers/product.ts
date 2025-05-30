@@ -47,7 +47,49 @@ export const productRouter = createTRPCRouter ({
         return await db.product.findUnique({
             where: {id: input.id}
         })
-    })
+    }),
+
+    deleteProduct_by_id: publicProcedure
+    .input(z.object({id: z.number()}))
+    .mutation(async({ctx,input})=>{
+        const {db} = ctx;
+
+        return await db.product.delete({
+            where: {id: input.id}
+        })
+    }),
+
+    updateProduct_by_id: publicProcedure
+    .input(z.object({
+        id: z.number(),
+        name: z.string(),
+        sku: z.string(),
+        price: z.number(),
+        cost: z.number(),
+        quantity : z.number(),
+        description : z.string().optional(),
+        image64: z.string().optional(),
+        }))
+    .mutation(async({ctx,input})=>{
+        const {db} = ctx;
+
+
+    const updateData: any = {
+                name: input.name,
+                sku: input.sku,
+                price: input.price,
+                cost: input.cost,
+                quantity: input.quantity,
+                description: input.description,
+                updatedAt: new Date(), // Update timestamp
+            };
+
+
+        return await db.product.update({
+            where: {id: input.id},
+            data: updateData,
+        })
+    }),
 
 }); 
 
