@@ -40,7 +40,10 @@ export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction,
         image: null
     });
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const productUpdate = api.product.updateProduct_by_id.useMutation();
+    const productUpdate = api.product.updateProduct_by_id.useMutation({
+        onSuccess: async () => {
+        },
+    });
 
     useEffect(() => {
         if (initialData) {
@@ -55,16 +58,6 @@ export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction,
             });
             setImagePreview(initialData.image64 ?? null);
 
-            productUpdate.mutate({
-                id: initialData.id,
-                name: productData.name,
-                sku: productData.sku,
-                price: parseFloat(productData.price),
-                cost: parseFloat(productData.cost),
-                quantity: parseInt(productData.quantity),
-                description: productData.description || undefined,
-                image64: imagePreview?.split(",")[1] || undefined,
-            });
 
         } else {
             resetForm();
@@ -121,47 +114,46 @@ export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction,
 
     const handleSubmit = async () => {
         try {
-            if (initialData) {
+            if (initialData?.createdAt && initialData.id != null) {
                 productUpdate.mutate({
                     id: initialData.id,
-                    name: initialData.name,
-                    sku: initialData.sku,
-                    price: initialData.price,
-                    cost: initialData.cost,
-                    quantity: initialData.quantity,
-                    description: initialData.description,
-                    image64: initialData.image64,
+                    name: productData.name,
+                    sku: productData.sku,
+                    price: parseFloat(productData.price),
+                    cost: parseFloat(productData.cost),
+                    quantity: parseInt(productData.quantity),
+                    description: productData.description || undefined,
+                    image64: imagePreview?.split(",")[1] || undefined,
                 });
 
-                return
-            }
-            let img64 = null;
-            if (productData.image) {
-                const reader = new FileReader();
-                img64 = await new Promise<string>((resolve, reject) => {
-                    reader.onload = (e) => {
-                        if (e.target?.result && typeof e.target.result === "string") {
-                            resolve(e.target.result);
-                        } else {
-                            reject(new Error("Failed to read file"));
-                        }
-                    };
-                    reader.onerror = () => reject(new Error("file no good. Cant read"));
-                    reader.readAsDataURL(productData.image!);
+            } else {
+                let img64 = null;
+                if (productData.image) {
+                    const reader = new FileReader();
+                    img64 = await new Promise<string>((resolve, reject) => {
+                        reader.onload = (e) => {
+                            if (e.target?.result && typeof e.target.result === "string") {
+                                resolve(e.target.result);
+                            } else {
+                                reject(new Error("Failed to read file"));
+                            }
+                        };
+                        reader.onerror = () => reject(new Error("file no good. Cant read"));
+                        reader.readAsDataURL(productData.image!);
+                    });
+                    img64 = img64.split(",")[1];
+                }
+
+                await createProduct.mutateAsync({
+                    name: productData.name,
+                    sku: productData.sku,
+                    price: productData.price,
+                    cost: productData.cost,
+                    quantity: productData.quantity,
+                    description: productData.description,
+                    image64: img64 || undefined
                 });
-                img64 = img64.split(",")[1];
             }
-
-            await createProduct.mutateAsync({
-                name: productData.name,
-                sku: productData.sku,
-                price: productData.price,
-                cost: productData.cost,
-                quantity: productData.quantity,
-                description: productData.description,
-                image64: img64 || undefined
-            });
-
         } catch (error) {
             console.error('Error in handleSubmit:', error);
         }
