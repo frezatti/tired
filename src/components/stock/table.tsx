@@ -44,13 +44,21 @@ export default function ProductsTable({ onEditAction, refreshTrigger }: Products
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
     const { data: products, isLoading, error, refetch } = api.product.getAllProducts.useQuery();
-    const deleteProduct = api.product.deleteProduct_by_id.useMutation();
+    const deleteProduct = api.product.deleteProduct_by_id.useMutation({
+        onSuccess: async () => {
+            await refetch(); // Make sure to await the refetch
+            setShowRadialMenu(false);
+        },
+    });
 
     useEffect(() => {
-        if (refreshTrigger && refreshTrigger > 0) {
-            refetch();
-        }
-    }, [refreshTrigger, refetch]);
+        const refreshData = async () => {
+            if (refreshTrigger && refreshTrigger > 0) {
+                await refetch();
+            }
+        };
+        refreshData();
+    }, [refreshTrigger]);
 
     const handleRowRightClick = (e: React.MouseEvent, product: Product) => {
         e.preventDefault();
@@ -111,32 +119,50 @@ export default function ProductsTable({ onEditAction, refreshTrigger }: Products
                     }}
                 >
                     <div className="relative w-full h-full">
+                        {/* Edit Button - Top (0°) */}
                         <Button
                             isIconOnly
                             size="sm"
                             variant="flat"
                             color="warning"
-                            className="absolute top-0 left-1/2 transform -translate-x-1/2"
+                            className="absolute"
+                            style={{
+                                left: '50%',
+                                top: '15%',
+                                transform: 'translate(-50%, -50%)'
+                            }}
                             onPress={() => handleEditProduct(selectedProduct)}
                         >
                             <Edit className="w-4 h-4" />
                         </Button>
+                        {/* Delete Button - Bottom Right (120°) */}
                         <Button
                             isIconOnly
                             size="sm"
                             variant="flat"
                             color="danger"
-                            className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+                            className="absolute"
+                            style={{
+                                left: '78%',
+                                top: '78%',
+                                transform: 'translate(-50%, -50%)'
+                            }}
                             onPress={() => handleDeleteProduct(selectedProduct)}
                         >
                             <Trash2 className="w-4 h-4" />
                         </Button>
+                        {/* View Button - Bottom Left (240°) */}
                         <Button
                             isIconOnly
                             size="sm"
                             variant="flat"
                             color="primary"
-                            className="absolute top-1/2 left-0 transform -translate-y-1/2"
+                            className="absolute"
+                            style={{
+                                left: '22%',
+                                top: '78%',
+                                transform: 'translate(-50%, -50%)'
+                            }}
                             onPress={() => {
                                 console.log('View product:', selectedProduct.id);
                                 setShowRadialMenu(false);

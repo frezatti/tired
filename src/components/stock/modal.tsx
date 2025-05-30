@@ -334,9 +334,10 @@ export default function ProductModal({ isOpen, onOpenChangeAction, onSaveAction,
                                     <Button
                                         color="success"
                                         variant="shadow"
-                                        onPress={() => {
-                                            handleSubmit();
+                                        onPress={async () => {
+                                            await handleSubmit();
                                             onClose();
+                                            onSaveAction();
                                         }}
                                         className="bg-gradient-to-r from-green-500 to-green-600"
                                         isDisabled={!productData.name || !productData.sku || !productData.price || !productData.cost || createProduct.isPending}

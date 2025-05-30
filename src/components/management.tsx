@@ -5,7 +5,8 @@ import { Button, Card, CardBody, CardHeader } from '@heroui/react';
 import ProductModal from './stock/modal';
 import ProductsTable from './stock/table';
 import type { Product } from '@/types';
-import { setRequestMeta } from 'next/dist/server/request-meta';
+import { api } from '@/trpc/react';
+
 
 interface ProductManagerProps { }
 
@@ -13,6 +14,9 @@ const ProductManager: React.FC<ProductManagerProps> = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [refreshTable, setRefreshTable] = useState<number>(0);
+
+
+    const utils = api.useUtils();
 
     const handleAdd = () => {
         setEditingProduct(null);
@@ -24,15 +28,17 @@ const ProductManager: React.FC<ProductManagerProps> = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsModalOpen(false);
         setEditingProduct(null);
         setRefreshTable(prev => prev + 1);
+        // Remove await - invalidate is typically synchronous
+        utils.product.getAllProducts.invalidate();
     };
 
     return (
         <Card className="shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700">
-            <CardHeader>
+            <CardHeader className="flex justify-end">
                 <Button
                     onPress={handleAdd}
                     color="primary"
