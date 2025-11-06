@@ -1,9 +1,3 @@
-## Tecnologies
-
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
-
 ## Database Command
 
 ```
