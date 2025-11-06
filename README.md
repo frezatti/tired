@@ -1,5 +1,3 @@
-# T3 Stack App
-
 ## Tecnologies
 
 - [Prisma](https://prisma.io)
